@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <meta charset="UTF-8">
+    <title>Material Compact Login Animation</title>
+    
+    <link rel="stylesheet" href="css/main.css">
+    <script type="text/javascript" src="node_modules/angular/angular.min.js"></script>
+  </head>
+
+  <body md-theme="appTheme" class="ralewaymedium" ng-cloak ng-app="myApp" ng-controller="loginController">
+      <div flex layout="column" layout-align="center center" layout-fill>
+          <div class="login-card-set">
+              <form class="loginForm" name="loginForm" novalidate>
+                  <h3 class="center-align">Login</h3>
+                  <div layout="row">
+                      <md-input-container flex>
+                          <label>Username</label>
+                          <input name="username" ng-model="username" required >
+                          <div ng-messages="loginForm.username.$error">
+                              <div ng-message="required">This is required!</div>
+                          </div>
+                      </md-input-container>
+                  </div>
+                  <div layout="row">
+                      <md-input-container flex>
+                          <label>Password</label>
+                          <input name="password" ng-model="password" required >
+                          <div ng-messages="loginForm.password.$error">
+                              <div ng-message="required">This is required!</div>
+                          </div>
+                    </md-input-container>
+                  </div>
+                  <div layout="row" layout-align="center">
+                      <md-input-container>
+                          <md-button class="md-primary md-raised" type="submit" ng-click="yo()">Login</md-button>
+                      </md-input-container>
+                  </div>
+              </form>
+
+              <div class="overbox">
+                  <md-content ng-click="showForgotCard($event)" class="plusButton altButton">
+                      <span class="shape"></span>
+                  </md-content>
+
+                  <h3 class="center-align">Forgot your password?</h3>
+                  <h4>Retrieve it</h4>
+
+                  <div layout="row">
+                      <md-input-container>
+                          <label for="forgot-email">Email</label>
+                          <input id="forgot-email" name="forgotEmail" type="email" ng-model="email" ng-required="true" />
+                          <div class="md-material-input-error md-white-theme c-red" ng-show="forgotForm.$submitted && forgotForm.email.$invalid && forgotForm.email.$untouched">Email required</div>
+                          <div class="md-material-input-error md-white-theme c-red" ng-show="forgotForm.$submitted && forgotForm.email.$invalid && forgotForm.email.$touched && forgotForm.email.$isEmpty">Invalid Email</div>
+                      </md-input-container>
+                  </div>
+
+                  <div layout="row" layout-align="center center">
+                      <md-input-container>
+                          <md-button type="submit">
+                              Send
+                          </md-button>
+                      </md-input-container>
+                  </div>
+              </div>
+          </div>
+        </div>
+
+       
+        <script type="text/javascript" src="node_modules/angular-route/angular-route.min.js"></script>
+        <script type="text/javascript" src="node_modules/angular-aria/angular-aria.min.js"></script>
+        <script type="text/javascript" src="node_modules/angular-animate/angular-animate.min.js"></script>
+        <script type="text/javascript" src="node_modules/angular-material/angular-material.min.js"></script>
+        <script type="text/javascript" src="node_modules/angular-messages/angular-messages.min.js"></script>
+
+        <script src="js/Modules/testApp.js"></script>
+        <script src="js/Modules/loginModule.js"></script>
+
+  </body>
+</html>

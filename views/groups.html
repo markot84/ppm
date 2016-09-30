@@ -1,0 +1,150 @@
+
+<md-button class="md-fab md-fab-bottom-right md-raised md-default-theme md-dark-orange" type="submit" form="groupForm" ng-if="model.tabs.selectedIndex">
+    <md-icon class="material-icons">{{ !model.isEdit ? '&#xE145;' : '&#xE254;' }}</md-icon>
+    <md-tooltip md-direction="left" md-autohide>{{ (model.isEdit ? 'update_group' : 'add_group') | i18n: application.lang }}</md-tooltip>
+</md-button>
+
+<md-toolbar class="md-menu-toolbar">
+    <div class="md-toolbar-tools">
+        <button ng-click="toggleSidenav('left')" hide-gt-sm class="menuBtn">
+            <span class="visually-hidden">Menu</span>
+        </button>
+        <h2 class="ralewaythin" flex>{{ 'groups' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+
+        <div class="search" ng-if="!model.tabs.selectedIndex">
+            <md-button class="small small-icon" ng-click="toggleSearch($event)">
+                <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_search' | i18n: application.lang }}</md-tooltip>
+                <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+            </md-button>
+            <md-input-container md-no-float class="md-white-to-orange-theme md-material-input search-input" flex>
+                <input class="ralewaymedium" type="text" placeholder="{{ 'search_for_a_group' | i18n: application.lang }}" ng-model="$parent.userSearch.username" />
+                <div class="border"></div>
+            </md-input-container>
+        </div>
+
+        <md-button ng-click="showListBottomSheet($event)" class="small bg-black">
+            <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_menu' | i18n: application.lang }}</md-tooltip>
+            <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+        </md-button>
+    </div>
+</md-toolbar>
+
+<md-tabs md-dynamic-height flex md-stretch-tabs="always" md-selected="model.tabs.selectedIndex">
+
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="column" layout-padding>
+                <md-card>
+                    <md-table-container>
+                        <table md-progress="model.promise" data-progress-theme="md-orange-theme" md-table md-row-select ng-model="model.selected" ng-init="getGroups()">
+                            <thead md-head md-on-reorder="initSearch" md-order="model.query.order">
+                            <tr md-row>
+                                <th md-column md-order-by="name"><span>{{ 'name' | i18n: application.lang }}</span></th>
+                                <th md-column md-order-by="client_id"><span>{{ 'client_name' | i18n: application.lang }}</span></th>
+                            </tr>
+                            </thead>
+                            <tbody md-body>
+                            <tr md-row md-on-select="selectObject" md-on-deselect="deselectObject" md-select="group" ng-show="filteredGroups.length > 0" ng-repeat="group in filteredGroups = (model.groups | filter:groupSearch ) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit">
+                                <td md-cell class="center-align">{{ group.name }}</td>
+                                <td md-cell class="center-align">{{ group.client_name }}</td>
+                            </tr>
+                            <tr md-row ng-if="filteredGroups.length==0">
+                                <td md-cell colspan="5" class="center-align"><p class="md-body-1">{{ 'no_groups_found' | i18n: application.lang }}</p></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </md-table-container>
+                    <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredGroups.length}}"></md-table-pagination>
+                </md-card>
+            </div>
+        </md-tab-body>
+    </md-tab>
+
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="row" layout-padding>
+                <md-card flex="50" flex-offset="25">
+
+                    <md-card-header>
+                        <md-card-avatar>
+                            <md-icon class="material-icons">&#xE019;</md-icon>
+                        </md-card-avatar>
+                        <md-card-header-text ng-if="model.isEdit">
+                            <span class="md-title">{{ model.selectedObject.name }}</span>
+                            <!--<span class="md-subhead" ng-class="model.selectedObject.status ? 'c-green' : 'c-red'">{{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</span>-->
+                        </md-card-header-text>
+                        <!--<span class="card-switch-wrapper">-->
+                            <!--<md-switch md-no-ink ng-model="model.selectedObject.status" ng-true-value="1" ng-false-value="0" flex="50"></md-switch>-->
+                            <!--<md-tooltip md-direction="bottom" md-autohide>{{ 'status' | i18n: application.lang }}: {{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</md-tooltip>-->
+                        <!--</span>-->
+                    </md-card-header>
+                    <md-card-content>
+                        <form layout="column" flex name="groupForm" id="groupForm" ng-submit="groupForm.$valid && (model.isEdit ? updateGroup() : addGroup())" novalidate autocomplete="off">
+
+                            <div layout="row">
+                                <i class="material-icons md-28 center-align" flex="5">&#xE865;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                    <label for="name">{{ 'name' | i18n: application.lang }}</label>
+                                    <input id="name" name="name" ng-model="model.selectedObject.name" ng-required="true">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>{{ 'group_name' | i18n: application.lang }}</md-tooltip>&#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="groupForm.$submitted && groupForm.name.$invalid && !groupForm.name.$dirty">{{ 'group_name_required' | i18n: application.lang }}</div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="(groupForm.$submitted || groupForm.name.$touched) && groupForm.name.$invalid && groupForm.name.$viewValue" class="md-caption">{{ 'group_name_required' | i18n: application.lang }}</div>
+                                </md-input-container>
+                            </div>
+
+                            <div layout="row" flex-offset="5" layout-wrap>
+                                <h4 flex="100" class="ralewaythin">{{ 'select_group_type' | i18n: application.lang }}<span class="c-red">*</span></h4>
+                                <div layout="row" flex="33" ng-repeat="type in model.group_types" layout-align="center center">
+                                    <md-button class="md-fab md-raised md-default-theme" ng-class="type.class" ng-click="setGroupType(type.id)">
+                                        <md-icon class="material-icons">{{type.icon}}</md-icon>
+                                        <md-tooltip md-direction="left" md-autohide>{{ type.name }}</md-tooltip>
+                                    </md-button>
+                                </div>
+                            </div>
+
+                            <div layout="row" flex-offset="5" ng-if="model.selectedObject.group_type==1" layout-wrap class="default-group-type">
+                                <h4 flex="100" class="ralewaythin">{{ 'availabel_devices' | i18n: application.lang }}</h4>
+
+                                <div layout="row" flex="100" layout-wrap class="filters">
+                                    <h6 flex="100" class="ralewaythin m-10">{{ 'filters' | i18n: application.lang }}</h6>
+                                    <md-radio-group layout="row" flex="100" ng-model="model.filteredDevice.os">
+                                        <md-radio-button value="">{{ 'all_devices' | i18n: application.lang }}</md-radio-button>
+                                        <md-radio-button value="1">{{ 'device_type_1' | i18n: application.lang }}</md-radio-button>
+                                        <md-radio-button value="2">{{ 'device_type_2' | i18n: application.lang }}</md-radio-button>
+                                        <md-radio-button value="3">{{ 'device_type_3' | i18n: application.lang }}</md-radio-button>
+                                    </md-radio-group>
+                                </div>
+
+                                <div layout="row" flex="100">
+                                    <md-checkbox ng-click="toggleAll()">{{ 'select_all' | i18n: application.lang }}</md-checkbox>
+                                </div>
+                                <div layout="row" flex="50" ng-repeat="device in model.filteredDevices = (model.devices | filter:model.filteredDevice ) ">
+                                    <md-checkbox ng-checked="deviceExistInGroup(device.uuid, model.selectedObject.devices)" ng-click="toggle(device.uuid, model.selectedObject.devices)">
+                                        <img src="images/{{device.os}}.png" alt="{{'device_type_'+device.os | i18n: application.lang}}" />
+                                        <span>{{device.uuid}}</span>
+                                        <md-tooltip md-direction="left" md-autohide>{{ 'device_type_'+device.os | i18n: application.lang }}</md-tooltip>
+                                    </md-checkbox>
+                                </div>
+                            </div>
+
+                            <div layout="row" flex-offset="10" ng-if="model.selectedObject.group_type==2">
+
+                            </div>
+
+                            <div layout="row" flex-offset="10" ng-if="model.selectedObject.group_type==3">
+
+                            </div>
+
+                        </form>
+                    </md-card-content>
+
+                </md-card>
+            </div>
+        </md-tab-body>
+    </md-tab>
+</md-tabs>

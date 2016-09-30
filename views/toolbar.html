@@ -1,0 +1,65 @@
+<!--<div hide-gt-md layout="row" layout-align="start center" ng-controller="sideNavController">-->
+    <!--<md-button  aria-label="Open phone interactions menu" ng-click="toggleLeft()">-->
+        <!--<md-icon class="fa fa-bars"></md-icon>-->
+    <!--</md-button>-->
+<!--</div>-->
+<div layout="row" layout-align="end center" ng-controller="toolbar">
+
+    <md-menu-bar ng-if="'clients' | canSee: user.role">
+        <md-menu>
+            <md-button ng-click="handleMenuActions($event)" class="small">
+               {{ 'clients' | i18n: application.lang }}
+            </md-button>
+            <md-menu-content id="toolbar-menu-content" width="3">
+                <md-menu-item ng-repeat="client in clients">
+                    {{client.name}}
+                </md-menu-item>
+            </md-menu-content>
+        </md-menu>
+    </md-menu-bar>
+
+    <search-input></search-input>
+
+    <md-menu-bar>
+        <md-menu>
+            <button ng-click="handleMenuActions($event)" class="small">
+                <md-tooltip md-direction="bottom" md-autohide>{{ 'menu' | i18n: application.lang }}</md-tooltip>
+                <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+            </button>
+            <md-menu-content id="toolbar-menu-content" width="3">
+                <md-menu-item>
+                    <md-button>
+                        <md-icon class="material-icons">&#xE8B8;</md-icon>
+                        Settings
+                    </md-button>
+                </md-menu-item>
+                <md-menu-item>
+                    <md-button disabled="disabled">
+                        <md-icon class="material-icons">&#xE243;</md-icon>
+                        Theme palete
+                    </md-button>
+                </md-menu-item>
+                <md-menu-divider></md-menu-divider>
+                <md-menu-item>
+                    <md-button disabled="{{ application.lang == 'en_US' ? 'disabled' : '' }}" ng-click="changeLang('en_US')">
+                        <img src="images/en.png" alt="en" />
+                        {{ 'english' | i18n: application.lang }}
+                    </md-button>
+                </md-menu-item>
+                <md-menu-item>
+                    <md-button disabled="{{ application.lang == 'el_GR' ? 'disabled' : '' }}" ng-click="changeLang('el_GR')">
+                        <img src="images/gr.png" alt="gr" />
+                        {{ 'greek' | i18n: application.lang }}
+                    </md-button>
+                </md-menu-item>
+                <md-menu-divider></md-menu-divider>
+                <md-menu-item>
+                    <md-button ng-click="logout()">
+                        <md-icon class="material-icons">&#xE8AC;</md-icon>
+                        {{ 'logout' | i18n: application.lang }}
+                    </md-button>
+                </md-menu-item>
+            </md-menu-content>
+        </md-menu>
+    </md-menu-bar>
+</div>

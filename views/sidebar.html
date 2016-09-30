@@ -1,0 +1,62 @@
+<div layout="column" class="toolbar center-align">
+    <a href="/"><img src="images/lockpush_logo.png" alt="logo" /></a>
+    <h3 class="c-white">locPush CMS</h3>
+    <h6 class="c-white">{{ 'welcome' | i18n: application.lang }}<br />{{ user.username }}</h6>
+    <h7 class="c-white left-align">Your role is: <strong>{{ user.role_label }}</strong></h7>
+</div>
+
+<md-content flex ng-controller="sidebar" ng-nicescroll nice-option="{cursorcolor:'#c0c0c0'}">
+    <ul flex layout="column">
+        <li layout="column" ng-if="'clients' | canSee: user.role">
+            <a href="/clients" layout="row" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{'Clients' | i18n: application.lang }}
+            </a>
+        </li>
+        <li layout="column" ng-if="'users' | canSee: user.role">
+            <a href="/users" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{ 'users' | i18n: application.lang }}
+            </a>
+        </li>
+        <li layout="column" ng-if="'groups' | canSee: user.role">
+            <a href="#" ng-click="showSubMenu($event, true)">{{ 'groups' | i18n: application.lang }}</a>
+            <ul class="submenu">
+                <li><a href="#" ng-click="setActiveSubMenu($event)" class="sub-menu-item"><i class="material-icons">&#xE1B0;</i>My Devices</a></li>
+                <li><a href="/groups" ng-click="setActiveSubMenu($event)" class="sub-menu-item"><i class="material-icons">&#xE896;</i>List Devices</a></li>
+            </ul>
+        </li>
+        <li layout="column" ng-if="'applications' | canSee: user.role">
+            <a href="/applications" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{ 'applications' | i18n: application.lang }}
+            </a>
+        </li>
+         <li layout="column" ng-if="'devices' | canSee: user.role">
+            <a href="/devices" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{ 'devices' | i18n: application.lang }}
+            </a>
+        </li>
+        <li layout="column" ng-if="'messages' | canSee: user.role">
+            <a href="#" ng-click="showSubMenu($event, true)">{{ 'uploaded_messages' | i18n: application.lang }}</a>
+            <ul class="submenu">
+                <li>
+                    <a href="#" ng-click="setActiveSubMenu($event)" class="sub-menu-item"><i class="material-icons">&#xE037;</i>Sub menu 1</a>
+                </li>
+            </ul>
+        </li>
+        <li layout="column" ng-if="'location' | canSee: user.role">
+            <a href="#" ng-click="showSubMenu($event, true)">{{ 'location' | i18n: application.lang }}</a>
+            <ul class="submenu">
+                <li><a href="#" ng-click="setActiveSubMenu($event)" class="sub-menu-item"><i class="material-icons">&#xE037;</i>Sub menu 1</a></li>
+            </ul>
+        </li>
+        <li layout="column" ng-if="'campaigns' | canSee: user.role">
+            <a href="/campaigns" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{ 'campaigns' | i18n: application.lang }}
+            </a>
+        </li>
+        <li layout="column" ng-if="'search_tags' | canSee: user.role">
+            <a href="/search-tags" layout="row" ng-click="showSubMenu($event, false)" class="no-submenu">
+                {{'search_tags' | i18n: application.lang }}
+            </a>
+        </li>
+    </ul>
+</md-content>

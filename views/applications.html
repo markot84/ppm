@@ -1,0 +1,217 @@
+<md-button class="md-fab md-fab-bottom-right md-raised md-default-theme md-dark-orange" type="submit" form="applicationForm" ng-if="model.tabs.selectedIndex">
+    <md-icon class="material-icons">&#xE161;</md-icon>
+    <md-tooltip md-direction="left" md-autohide>{{ 'update_application' | i18n: application.lang }}</md-tooltip>
+</md-button>
+
+<md-toolbar class="md-menu-toolbar">
+    <div class="md-toolbar-tools">
+        <button ng-click="toggleSidenav('left')" hide-gt-sm class="menuBtn">
+            <span class="visually-hidden">Menu</span>
+        </button>
+        <h2 class="ralewaythin" flex>{{ 'applications' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+
+        <div class="search" ng-if="!model.tabs.selectedIndex">
+            <md-button class="small small-icon" ng-click="toggleSearch($event)">
+                <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_search' | i18n: application.lang }}</md-tooltip>
+                <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+            </md-button>
+            <md-input-container md-no-float class="md-white-to-orange-theme md-material-input search-input" flex>
+                <input class="ralewaymedium" type="text" placeholder="{{ 'search_for_an_application' | i18n: application.lang }}" ng-model="$parent.applicationSearch.name" />
+                <div class="border"></div>
+            </md-input-container>
+        </div>
+
+        <md-button ng-click="showListBottomSheet($event)" class="small bg-black">
+            <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_menu' | i18n: application.lang }}</md-tooltip>
+            <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+        </md-button>
+    </div>
+</md-toolbar>
+
+<md-tabs flex md-stretch-tabs="always" md-selected="model.tabs.selectedIndex">
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="column" layout-padding>
+                <md-content layout-gt-sm="row" layout-wrap>
+                    <h4 flex="100" class="ralewaythin">{{ 'filters' | i18n: application.lang }}</h4>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" flex>
+                            <label>{{ 'application' | i18n: application.lang }}</label>
+                            <input id="application-search" ng-model="applicationSearch.name" ng-change="afterSearch()" />
+                        </md-input-container>
+                    </div>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" ng-if="'clients' | canSee: user.role" flex>
+                            <label>{{ 'client' | i18n: application.lang }}</label>
+                            <md-select ng-model="applicationSearch.client_id">
+                                <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                <md-option ng-repeat="client in clients" value="{{client.id}}">{{client.name}}</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" flex>
+                            <label>{{ 'filter_status' | i18n: application.lang }}</label>
+                            <md-select ng-model="applicationSearch.status">
+                                <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                <md-option value="1">{{ 'enabled' | i18n: application.lang }}</md-option>
+                                <md-option value="0">{{ 'disabled' | i18n: application.lang }}</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                </md-content>
+
+                <md-table-container>
+                    <table md-table md-progress="model.promise" data-progress-theme="md-orange-theme" md-row-select ng-model="model.selected" ng-init="getApplications()">
+                        <thead md-head md-on-reorder="init" md-order="model.query.order">
+                        <tr md-row>
+                            <th md-column md-order-by="name"><span>{{ 'name' | i18n: application.lang }}</span></th>
+                            <th ng-if="'clients' | canSee: $parent.user.role" md-column md-order-by="client_name"><span>{{ 'client' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="platform"><span>{{ 'platform' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="status"><span>{{ 'status' | i18n: application.lang }}</span></th>
+                        </tr>
+                        </thead>
+                        <tbody md-body>
+                        <tr md-row md-on-select="selectObject" md-on-deselect="deselectObject" md-select="application" md-auto-select ng-show="filteredApplications.length > 0" ng-repeat="application in filteredApplications = (model.applications | filter:applicationSearch ) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit" >
+                            <td md-cell class="center-align">{{ application.name }}</td>
+                            <td ng-if="'clients' | canSee: $parent.user.role" md-cell class="center-align">{{ application.client_name }}</td>
+                            <td md-cell class="center-align">{{ application.platform | platform }}</td>
+                            <td md-cell>
+                                <md-switch md-no-ink aria-label="" ng-model="application.status" ng-true-value="1" ng-false-value="0" ng-change="changeStatus(application)">
+                                    {{ (application.status ? 'enabled' : 'disabled') | i18n: $parent.$parent.application.lang }}
+                                </md-switch>
+                            </td>
+                        </tr>
+                        <tr md-row ng-if="filteredApplications.length == 0">
+                            <td md-cell colspan="5" class="center-align"><p class="md-body-1">{{ 'no_applications_found' | i18n: application.lang }}</p></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </md-table-container>
+
+                <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredApplications.length}}"></md-table-pagination>
+            </div>
+        </md-tab-body>
+    </md-tab>
+
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="row" layout-padding>
+                <md-card flex="50" flex-offset="25">
+                    <md-card-header>
+                        <md-card-avatar>
+                            <md-icon class="material-icons">&#xE87B;</md-icon>
+                        </md-card-avatar>
+                        <md-card-header-text ng-if="model.isEdit">
+                            <span class="md-title">{{ model.selectedObject.name }}</span>
+                            <span class="md-subhead" ng-class="model.selectedObject.status ? 'c-green' : 'c-red'">{{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</span>
+                        </md-card-header-text>
+                        <span class="card-switch-wrapper">
+                            <md-switch md-no-ink ng-model="model.selectedObject.status" ng-true-value="1" ng-false-value="0" flex="50"></md-switch>
+                            <md-tooltip md-direction="bottom" md-autohide>{{ 'status' | i18n: application.lang }}: {{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</md-tooltip>
+                        </span>
+                    </md-card-header>
+                    <md-card-content>
+                        <form layout="column" flex name="applicationForm" id="applicationForm" ng-submit="applicationForm.$valid && (model.isEdit ? updateApplication() : addApplication())" novalidate autocomplete="off">
+
+                            <div layout="row">
+                                <i class="material-icons md-28 center-align" flex="5">&#xE0BE;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                    <label for="name">{{ 'name' | i18n: application.lang }}</label>
+                                    <input id="name" name="name" ng-model="model.selectedObject.name" ng-required="true">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>Application's name</md-tooltip>
+                                        &#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="applicationForm.$submitted && applicationForm.name.$invalid && !applicationForm.name.$dirty">{{ 'name_required' | i18n: application.lang }}</div>
+                                </md-input-container>
+                            </div>
+
+                            <div layout="column" ng-if="'clients' | canSee: user.role">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'users_client' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex-offset="10" flex="50" class="md-black-to-orange-theme">
+                                        <label>{{ 'select_client' | i18n: application.lang }}</label>
+                                        <md-select ng-model="model.selectedObject.client_id">
+                                            <md-option ng-repeat="client in clients" value="{{client.id}}">{{client.name}}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="column">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'application_logo' | i18n: application.lang }}</h4>
+                                <img layout="row" flex-offset="10" width="100" height="100" ng-src="{{model.selectedObject.img_path}}" ng-if="model.selected[0].id"/>
+                                <div layout="row" flex-offset="10">
+                                    <md-dropzone flex="60" data-drop-options="lala"></md-dropzone>
+                                </div>
+                            </div>
+
+                            <div layout="column">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'platform' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex-offset="10" flex="50" class="md-black-to-orange-theme">
+                                        <label>{{ 'select_platform' | i18n: application.lang }}</label>
+                                        <md-select ng-model="model.selectedObject.platform">
+                                            <md-option value="1">Android</md-option>
+                                            <md-option value="2">Ios</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="column" ng-if="model.selectedObject.platform == 2">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'use_production_server' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex-offset="10" flex="50" class="md-black-to-orange-theme">
+                                        <md-checkbox ng-model="model.selectedObject.production" ng-true-value="1" ng-false-value="0" aria-label="production"></md-checkbox>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="column">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'application_id' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container class="md-black-to-orange-theme md-material-input" flex-offset="10" flex="50">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>{{ 'application_id' | i18n: application.lang }}</md-tooltip>
+                                            &#xE0C6;
+                                        </md-icon>
+                                        <label for="id">{{ 'name' | i18n: application.lang }}</label>
+                                        <input id="id" ng-model="model.selected[0].id" type="{{model.input_type}}" disabled>
+                                        <md-icon class="material-icons toggle-show" ng-click="toggleShow()">
+                                            <md-tooltip md-direction="right" md-autohide>{{ model.input_type == 'password' ? "show_password" : "hide_password" | i18n: application.lang }}</md-tooltip>
+                                        {{ model.input_type == 'password' ? "&#xE8F4;" : "&#xE8F5;" }}</md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="column">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'application_secret' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container class="md-black-to-orange-theme md-material-input" flex-offset="10" flex="50">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>{{ 'application_secret' | i18n: application.lang }}</md-tooltip>
+                                            &#xE0C6;
+                                        </md-icon>
+                                        <label for="secret">{{ 'name' | i18n: application.lang }}</label>
+                                        <input id="secret" ng-model="model.selectedObject.secret" type="{{model.input_type}}" disabled>
+                                        <md-icon class="material-icons toggle-show" ng-click="toggleShow()">
+                                            <md-tooltip md-direction="right" md-autohide>{{ model.input_type == 'password' ? "show_secret" : "hide_secret" | i18n: application.lang }}</md-tooltip>
+                                            {{ model.input_type == 'password' ? "&#xE8F4;" : "&#xE8F5;" }}</md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                        </form>
+                    </md-card-content>
+                </md-card>
+            </div>
+        </md-tab-body>
+    </md-tab>
+</md-tabs>

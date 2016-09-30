@@ -1,0 +1,31 @@
+<h4>Search Tags</h4>
+<md-divider></md-divider>
+
+<h5>Users Tags</h5>
+<md-divider></md-divider>
+<md-chips ng-model="userTags" md-transform-chip="newTag($chip, 'users')" placeholder="Add Tag" md-on-add="addTag($chip)" md-on-remove="removeTag($chip)">
+    <md-chip-template flex="100">
+        {{$chip.name}}
+    </md-chip-template>
+    <button md-chip-remove class="md-primary chip-button remove-chip">
+        <md-icon class="material-icons">
+            &#xE5CD;
+        </md-icon>
+    </button>
+</md-chips>
+
+<h5>Devices Tags</h5>
+<md-divider></md-divider>
+<md-chips ng-model="devicesTags" md-transform-chip="newTag($chip, 'devices')" placeholder="Add Tag" md-on-add="addTag($chip)" md-on-remove="removeTag($chip)">
+    <md-chip-template flex="100">
+        {{$chip.name}}
+    </md-chip-template>
+    <button md-chip-remove class="md-primary chip-button remove-chip">
+        <md-icon class="material-icons">
+            &#xE5CD;
+        </md-icon>
+    </button>
+</md-chips>
+
+
+

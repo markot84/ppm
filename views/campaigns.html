@@ -1,0 +1,332 @@
+<h2 class="ralewaythin">{{ 'campaigns' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+<md-tabs flex md-border-bottom md-selected="model.tabs.selectedIndex">
+
+    <!--List-->
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <!--Search and filters-->
+            <md-content layout-gt-sm="row">
+                <div flex layout="row">
+                    <md-input-container class="md-black-to-orange-theme md-material-input input-container">
+                        <md-icon class="material-icons">&#xE8B6;</md-icon>
+                        <label for="campaign-search">{{ 'search_for_a_campaign' | i18n: application.lang }}</label>
+                        <input id="campaign-search" ng-model="campaignSearch.username" ng-change="afterSearch()" />
+                        <div class="border"></div>
+                    </md-input-container>
+                </div>
+            </md-content>
+
+            <md-table-container>
+                <table md-progress="model.promise" md-table md-row-select ng-model="model.selected" ng-init="getCampaigns();">
+                    <thead md-head md-on-reorder="init" md-order="model.query.order">
+                        <tr md-row>
+                            <th md-column md-order-by="name"><span>{{ 'name' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="application_name" ng-if="'applications' | canSee: user.role"><span>{{ 'application' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="client_name" ng-if="'clients' | canSee: user.role"><span>{{ 'client' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="date_created"><span>{{ 'date_created' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="delivery_time"><span>{{ 'delivery_time' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="delivery_day"><span>{{ 'delivery_day' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="date_start"><span>{{ 'date_start' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="date_end"><span>{{ 'date_end' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="status"><span>{{ 'status' | i18n: application.lang }}</span></th>
+                            <!--<th md-column md-order-by="active"><span>{{ 'active' | i18n: application.lang }}</span></th>-->
+                        </tr>
+                    </thead>
+                    <tbody md-body>
+                        <tr md-row md-on-select="selectCampaign" md-on-deselect="deselectObject" md-select="campaign" md-auto-select ng-show="filteredCampaigns.length > 0" ng-repeat="campaign in filteredCampaigns = (model.campaigns | filter:campaignSearch ) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit" >
+                            <td md-cell class="center-align">{{ campaign.name }}</td>
+                            <td md-cell class="center-align" ng-if="'applications' | canSee: $parent.user.role">{{ campaign.application_name }}</td>
+                            <td md-cell class="center-align" ng-if="'clients' | canSee: $parent.user.role">{{ campaign.client_name }}</td>
+                            <td md-cell class="center-align">{{ campaign.date_created | date:'dd/MM/yyyy :: HH:mm' }}</td>
+                            <td md-cell class="center-align"><span>{{ (campaign.delivery_time ? (campaign.delivery_time | date: (campaign.frequency == 1 ? 'dd/MM/yyyy :: HH:mm' : 'HH:mm')) : '--') }}</span></td>
+                            <td md-cell class="center-align">{{ (campaign.delivery_day ? campaign.delivery_day : '--') }}</td>
+                            <td md-cell class="center-align">{{ (campaign.date_start ? (campaign.date_start | date:'dd/MM/yyyy') : '--') }}</td>
+                            <td md-cell class="center-align">{{ (campaign.date_end ? (campaign.date_end | date:'dd/MM/yyyy') : '--') }}</td>
+                            <td md-cell class="center-align">{{ campaign.status | campaignStatus }} <span ng-if="(campaign.status != 4 && campaign.frequency > 1)">({{ campaign.frequency | campaignFrequency }})</span></td>
+                            <!--<td md-cell>-->
+                                <!--<md-switch class="md-primary" md-no-ink aria-label="Switch to make campaign {{ (campaign.active ? 'inactive' : 'active') | i18n: application.lang }}" ng-model="campaign.active" ng-true-value="1" ng-false-value="0" ng-change="changeStatus(user)">-->
+                                    <!--{{ (campaign.active ? 'active' : 'inactive') | i18n: application.lang }}-->
+                                <!--</md-switch>-->
+                            <!--</td>-->
+                        </tr>
+                        <tr md-row ng-show="filteredCampaigns.length==0">
+                            <td md-cell colspan="10" class="center-align">
+                                <p class="md-body-1">{{ 'no_campaigns_found' | i18n: application.lang }}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </md-table-container>
+
+            <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredCampaigns.length}}"></md-table-pagination>
+        </md-tab-body>
+    </md-tab>
+
+    <!--Add/Edit-->
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <form name="campaignForm" ng-submit="campaignForm.$valid && (model.isEdit ? updateCampaign() : addCampaign())" novalidate autocomplete="off">
+
+                <!--Campaign Name-->
+                <h4 flex-offset="5" class="ralewaythin">{{ 'general_information' | i18n: application.lang }}</h4>
+                <div layout="row">
+                    <div layout="row" flex="45">
+                        <i class="material-icons md-36 center-align" flex="10">&#xE85D;</i>
+                        <md-input-container class="md-black-to-orange-theme md-material-input required" flex="50">
+                            <label for="campaign-name">{{ 'campaign_name' | i18n: application.lang }}</label>
+                            <input id="campaign-name" name="campaignName" ng-model="model.selectedObject.name" ng-required="true">
+                            <md-icon class="material-icons">
+                                <md-tooltip md-direction="right" md-autohide>Enter your campaign name</md-tooltip>&#xE0C6;
+                            </md-icon>
+                            <div class="border"></div>
+                            <div class="md-material-input-error c-dark-orange" ng-show="campaignForm.$submitted && campaignForm.campaignName.$invalid && !campaignForm.campaignName.$dirty">
+                                {{ 'campaign_name_required' | i18n: application.lang }}
+                            </div>
+                        </md-input-container>
+                    </div>
+                </div>
+
+                <!--Audience-->
+                <h4 flex-offset="5" class="ralewaythin">{{ 'audience' | i18n: application.lang }}</h4>
+                <div layout="row" flex-offset="5" flex="40">
+                    Select audience (Everyone / Segment / Specific Users)
+                </div>
+
+                <!--Notification-->
+                <h4 flex-offset="5" class="ralewaythin">{{ 'notification_content' | i18n: application.lang }}</h4>
+                <div layout="row" flex-offset="5" flex="40">
+                    Input and preview of the content of the notification to be pushed
+                </div>
+
+                <!--Delivery Time-->
+                <h4 flex-offset="5" class="ralewaythin">{{ 'delivery_time' | i18n: application.lang }}</h4>
+                <div layout="row">
+                    <div layout="row" flex-offset="5" flex="40">
+                        When the notification should be sent?
+                    </div>
+
+                    <div layout="column" flex-offset="10" flex="40">
+                        <md-radio-group layout="row" ng-model="model.selectedObject.delivery">
+                            <md-radio-button name="delivery" value="1">{{ 'send_now' | i18n: application.lang }}</md-radio-button>
+                            <md-radio-button name="delivery" value="2">{{ 'send_later' | i18n: application.lang }}</md-radio-button>
+                        </md-radio-group>
+
+                        <div ng-if="model.selectedObject.delivery == 2" layout="column">
+                            <md-input-container>
+                                <label>{{ 'frequency' | i18n: application.lang }}</label>
+                                <md-select ng-model="model.selectedObject.frequency" ng-change="clearCampaignFields()">
+                                    <md-option value="1">{{ 'once' | i18n: application.lang }}</md-option>
+                                    <md-option value="2">{{ 'daily' | i18n: application.lang }}</md-option>
+                                    <md-option value="3">{{ 'weekly' | i18n: application.lang }}</md-option>
+                                    <md-option value="4">{{ 'monthly' | i18n: application.lang }}</md-option>
+                                </md-select>
+                            </md-input-container>
+
+                            <!--Once-->
+                            <div layout="row" ng-if="model.selectedObject.frequency == 1">
+                                <i class="material-icons md-36 center-align" flex="5">&#xE916;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                    <label> {{ 'date_time' | i18n: application.lang }}</label>
+                                    <input  mdc-datetime-picker date="true" time="false" type="text"
+                                            placeholder="Time"
+                                            min-date="model.today"
+                                            ng-model="model.selectedObject.delivery_time">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>Select your campaign's Delivery Date and Time</md-tooltip>&#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                </md-input-container>
+                            </div>
+
+                            <!--Daily-->
+                            <div layout="column" ng-if="model.selectedObject.frequency == 2">
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE8B5;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="daily-campaign-time">{{ 'time' | i18n: application.lang }}</label>
+                                        <input id="daily-campaign-time" name="campaignTime" type="text" mdc-datetime-picker="" date="false" time="true" ng-model="model.selectedObject.delivery_time" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Delivery Time</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="daily-campaign-start-date">{{ 'date_start' | i18n: application.lang }}</label>
+                                        <input id="daily-campaign-start-date" name="campaignDateStart" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.today" max-date="model.maxDate" ng-model="model.selectedObject.date_start" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Start Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+
+                                    <i class="material-icons md-36 center-align" flex-offset="10" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="daily-campaign-end-date">{{ 'date_end' | i18n: application.lang }}</label>
+                                        <input id="daily-campaign-end-date" name="campaignDateEnd" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.endDateMin" max-date="model.maxDate" ng-model="model.selectedObject.date_end" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's End Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <!--Weekly-->
+                            <div layout="column" ng-if="model.selectedObject.frequency == 3">
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE8B5;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="weekly-campaign-time">{{ 'time' | i18n: application.lang }}</label>
+                                        <input id="weekly-campaign-time" name="campaignTime" type="text" mdc-datetime-picker="" date="false" time="true" ng-model="model.selectedObject.delivery_time" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Delivery Time</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+
+                                    <md-input-container flex-offset="10" flex="45">
+                                        <label>{{ 'week_day' | i18n: application.lang }}</label>
+                                        <md-select name="campaignDay" ng-model="model.selectedObject.delivery_day">
+                                            <md-option value="1">{{ 'monday'    | i18n: application.lang }}</md-option>
+                                            <md-option value="2">{{ 'tuesday'   | i18n: application.lang }}</md-option>
+                                            <md-option value="3">{{ 'wednesday' | i18n: application.lang }}</md-option>
+                                            <md-option value="4">{{ 'thursday'  | i18n: application.lang }}</md-option>
+                                            <md-option value="5">{{ 'friday'    | i18n: application.lang }}</md-option>
+                                            <md-option value="6">{{ 'saturday'  | i18n: application.lang }}</md-option>
+                                            <md-option value="7">{{ 'sunday'    | i18n: application.lang }}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="weekly-campaign-start-date">{{ 'date_start' | i18n: application.lang }}</label>
+                                        <input id="weekly-campaign-start-date" name="campaignDateStart" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.today" max-date="model.maxDate" ng-model="model.selectedObject.date_start" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Start Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+
+                                    <i class="material-icons md-36 center-align" flex-offset="10" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="weekly-campaign-end-date">{{ 'date_end' | i18n: application.lang }}</label>
+                                        <input id="weekly-campaign-end-date" name="campaignDateEnd" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.endDateMin" max-date="model.maxDate" ng-model="model.selectedObject.date_end" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="left" md-autohide>Select your campaign's End Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <!--Monthly-->
+                            <div layout="column" ng-if="model.selectedObject.frequency == 4">
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE8B5;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="monthly-campaign-time">{{ 'time' | i18n: application.lang }}</label>
+                                        <input id="monthly-campaign-time" name="campaignTime" type="text" mdc-datetime-picker="" date="false" time="true" ng-model="model.selectedObject.delivery_time" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Delivery Time</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+
+                                    <md-input-container flex-offset="10" flex="45">
+                                        <label>{{ 'month_day' | i18n: application.lang }}</label>
+                                        <md-select name="campaignDay" ng-model="model.selectedObject.delivery_day">
+                                            <md-option value="1">1</md-option>
+                                            <md-option value="2">2</md-option>
+                                            <md-option value="3">3</md-option>
+                                            <md-option value="4">4</md-option>
+                                            <md-option value="5">5</md-option>
+                                            <md-option value="6">6</md-option>
+                                            <md-option value="7">7</md-option>
+                                            <md-option value="8">8</md-option>
+                                            <md-option value="9">9</md-option>
+                                            <md-option value="10">10</md-option>
+                                            <md-option value="11">11</md-option>
+                                            <md-option value="12">12</md-option>
+                                            <md-option value="13">13</md-option>
+                                            <md-option value="14">14</md-option>
+                                            <md-option value="15">15</md-option>
+                                            <md-option value="16">16</md-option>
+                                            <md-option value="17">17</md-option>
+                                            <md-option value="18">18</md-option>
+                                            <md-option value="19">19</md-option>
+                                            <md-option value="20">20</md-option>
+                                            <md-option value="21">21</md-option>
+                                            <md-option value="22">22</md-option>
+                                            <md-option value="23">23</md-option>
+                                            <md-option value="24">24</md-option>
+                                            <md-option value="25">25</md-option>
+                                            <md-option value="26">26</md-option>
+                                            <md-option value="27">27</md-option>
+                                            <md-option value="28">28</md-option>
+                                            <md-option value="29">29</md-option>
+                                            <md-option value="30">30</md-option>
+                                            <md-option value="31">31</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+
+                                <div layout="row">
+                                    <i class="material-icons md-36 center-align" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="monthly-campaign-start-date">{{ 'date_start' | i18n: application.lang }}</label>
+                                        <input id="monthly-campaign-start-date" name="campaignDateStart" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.today" max-date="model.maxDate" ng-model="model.selectedObject.date_start" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's Start Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+
+                                    <i class="material-icons md-36 center-align" flex-offset="10" flex="5">&#xE916;</i>
+                                    <md-input-container class="md-black-to-orange-theme md-material-input required" flex-offset="5" flex="35">
+                                        <label for="monthly-campaign-end-date">{{ 'date_end' | i18n: application.lang }}</label>
+                                        <input id="monthly-campaign-end-date" name="campaignDateEnd" type="text" mdc-datetime-picker="" date="true" time="false" min-date="model.endDateMin" max-date="model.maxDate" ng-model="model.selectedObject.date_end" class="md-input">
+                                        <md-icon class="material-icons">
+                                            <md-tooltip md-direction="right" md-autohide>Select your campaign's End Date</md-tooltip>&#xE0C6;
+                                        </md-icon>
+                                        <div class="border"></div>
+                                    </md-input-container>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--Groups-->
+                <h4 flex-offset="5" class="ralewaythin">{{ 'group' | i18n: application.lang }}</h4>
+                <div layout="row" flex-offset="5" flex="40">
+                    <md-input-container flex="50" class="md-black-to-orange-theme">
+                        <label>{{ 'group' | i18n: application.lang }}</label>
+                        <md-select ng-model="model.selectedObject.group_id">
+                            <md-option ng-repeat="group in model.groups" value="{{group.id}}">{{group.name}}</md-option>
+                        </md-select>
+                    </md-input-container>
+                </div>
+
+                <div layout="row" flex-offset="5">
+                    <md-button class="md-fab md-primary md-raised" ng-click="groupsDialog()">
+                        <md-tooltip md-direction="left" md-autohide>{{ 'add_group' | i18n: application.lang }}</md-tooltip>
+                        <md-icon class="material-icons">&#xE89C;</md-icon>
+                    </md-button>
+                </div>
+
+                <md-button class="md-fab md-primary md-raised save-user-btn" type="submit">
+                    <md-tooltip md-direction="left" md-autohide>{{ 'save' | i18n: application.lang }}</md-tooltip>
+                    <md-icon class="material-icons">&#xE161;</md-icon>
+                </md-button>
+            </form>
+        </md-tab-body>
+    </md-tab>
+</md-tabs>

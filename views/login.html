@@ -1,0 +1,111 @@
+<div flex layout="column" layout-align="center center">
+    <img src="images/lockpush_logo.png" id="login-logo" ng-class="{ small: !application.isLoading}" />
+
+    <div  ng-class="{ active: cardSet.forgotCardIsActive }" class="login-card-set dsn">
+
+        <div class="login-card"></div>
+
+        <div layout-padding class="login-card bg-white">
+            <h3 class="center-align">{{ 'login_title' |i18n: application.lang }}</h3>
+            <h4>{{ 'login' | i18n: application.lang }}</h4>
+            <div class="error">{{cardSet.loginError}}</div>
+            <form name="loginForm" id="loginForm" autocomplete="off" ng-submit="submitLoginForm($event)" novalidate>
+                <div layout="row">
+                    <md-input-container class="md-default-theme md-material-input input-container required" flex="80" flex-offset="5">
+                        <label for="email">{{ 'email' | i18n: application.lang }}</label>
+                        <input id="email" name="email" type="email" ng-model="email" ng-required="true" ng-change="changeFormUsernameState()" required />
+                        <div class="border"></div>
+                        <div class="md-material-input-error md-default-theme c-white" ng-show="loginForm.$submitted && loginForm.email.$invalid && loginForm.email.$untouched">{{ 'username_required' | i18n: application.lang }}</div>
+                        <div class="md-material-input-error md-default-theme c-white" ng-show="loginForm.$submitted && loginForm.email.$invalid && loginForm.email.$touched && loginForm.email.$isEmpty">{{ 'email_invalid' | i18n: application.lang }}</div>
+                    </md-input-container>
+                </div>
+
+                <div layout="row">
+                    <md-input-container class="md-default-theme md-material-input input-container required" flex="80" flex-offset="5">
+                        <label for="password">{{ 'password' | i18n: application.lang }}</label>
+                        <input id="password" name="password" type="password" ng-model="password" ng-required="true" ng-minlength="8" ng-change="changeFormPasswordState()" required />
+                        <div class="border"></div>
+                        <div class="md-material-input-error md-default-theme c-white" ng-show="loginForm.$submitted && loginForm.password.$invalid && loginForm.password.$untouched">{{ 'password_required' | i18n: application.lang }}</div>
+                        <div class="md-material-input-error md-default-theme c-white" ng-show="loginForm.$submitted && loginForm.password.$invalid && loginForm.password.$touched && loginForm.password.$isEmpty">{{ 'password_invalid' | i18n: application.lang }}</div>
+                    </md-input-container>
+                </div>
+
+                <div layout="row" layout-align="center center">
+                    <md-button aria-label="{{ 'im_sure_this_is_it' | i18n: application.lang }}" type="submit" class="md-raised md-default-theme md-dark-orange text-upercase">
+                        <span ng-show="!loginForm.$submitted || (loginForm.$submitted && (loginForm.email.$invalid || loginForm.password.$invalid))">{{ 'im_sure_this_is_it' |i18n: application.lang }}</span>
+                        <div class="is-loading" ng-show="loginForm.$submitted && loginForm.password.$valid && loginForm.email.$valid"><div><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b><b class="left-align"></b></div></div>
+                    </md-button>
+                </div>
+            </form>
+        </div>
+
+        <!--<div layout-padding ng-class="{ active: cardSet.registerCardIsActive }" class="login-card hidden bg-red">-->
+            <!--<md-button ng-click="showRegisterCard($event)" aria-label="{{ 'register' | i18n: application.lang }}" class="trigger register md-fab md-raised md-default-theme md-redish">-->
+                <!--<md-tooltip md-direction="bottom" md-autohide>{{ (cardSet.registerCardIsActive ? 'close' : 'register' ) | i18n: application.lang }}</md-tooltip>-->
+            <!--</md-button>-->
+
+            <!--<h3></h3>-->
+            <!--<h4 class="c-white dsn">{{ 'register' |i18n: application.lang }}</h4>-->
+
+            <!--<form name="registerForm" autocomplete="off" method="post" ng-submit="submitLoginForm($event)" class="dsn" novalidate>-->
+
+                <!--<div layout="row">-->
+                    <!--<md-input-container class="md-default-theme md-material-input required" flex="80" flex-offset="5">-->
+                        <!--<label for="email">{{ 'email' |i18n: application.lang }}</label>-->
+                        <!--<input id="email" name="email" type="email" ng-model="email" ng-required="true" ng-change="changeFormUsernameState()" required />-->
+                        <!--<div class="border"></div>-->
+                        <!--<div class="md-material-input-error c-white" ng-show="loginForm.$submitted && loginForm.email.$invalid && loginForm.email.$untouched">{{ 'email_required' | i18n: application.lang }}</div>-->
+                        <!--<div class="md-material-input-error c-white" ng-show="loginForm.$submitted && loginForm.email.$invalid && loginForm.email.$touched && loginForm.email.$isEmpty">{{ 'email_invalid' | i18n: application.lang }}</div>-->
+                    <!--</md-input-container>-->
+                <!--</div>-->
+
+                <!--<div layout="row">-->
+                    <!--<md-input-container class="md-default-theme md-material-input required" flex="80" flex-offset="5">-->
+                        <!--<label for="password">{{ 'password' | i18n: application.lang }}</label>-->
+                        <!--<input id="password" name="password" type="password" ng-model="password" ng-required="true" ng-minlength="8" ng-maxlength="8" ng-change="changeFormPasswordState()" required />-->
+                        <!--<div class="border"></div>-->
+                        <!--<div class="md-material-input-error c-white" ng-show="loginForm.$submitted && loginForm.password.$invalid && loginForm.password.$untouched">{{ 'password_required' | i18n: application.lang }}</div>-->
+                        <!--<div class="md-material-input-error c-white" ng-show="loginForm.$submitted && loginForm.password.$invalid && loginForm.password.$touched && loginForm.password.$isEmpty">{{ 'password_invalid' | i18n: application.lang }}</div>-->
+                    <!--</md-input-container>-->
+                <!--</div>-->
+
+                <!--<div layout="row" layout-align="center center">-->
+                    <!--<md-button aria-label="{{ 'im_sure_this_is_it' | i18n: application.lang }}" type="submit" class="md-raised text-upercase">-->
+
+                    <!--</md-button>-->
+                    <!--<div class="text-upercase btn btn-extra-large btn-register center-element cdb login-transitions">ok</div>-->
+                <!--</div>-->
+
+            <!--</form>-->
+        <!--</div>-->
+
+        <div layout-padding ng-class="{ 'active bg-dark-orange': cardSet.forgotCardIsActive }" class="login-card hidden">
+            <md-button ng-click="showForgotCard($event)" aria-label="{{ 'forgot_your_password' | i18n: application.lang }}" class="trigger forgot md-fab md-raised md-default-theme md-dark-orange">
+                <md-tooltip md-direction="bottom" md-autohide>{{ (cardSet.forgotCardIsActive ? 'close' : 'forgot_your_password' ) | i18n: application.lang }}</md-tooltip>
+            </md-button>
+
+            <h3 class="dsn">{{ 'forgot_your_password_h' | i18n: application.lang }}</h3>
+            <h4 class="c-white dsn">{{ 'retrieve_it' | i18n: application.lang }}</h4>
+
+            <form name="forgotForm" autocomplete="off" method="post" ng-submit="submitForgotForm($event)" class="dsn" novalidate>
+                <div layout="row">
+                    <md-input-container class="md-default-theme md-black-to-white-theme md-material-input required" flex="80" flex-offset="5">
+                        <label for="forgot-email">{{ 'email' | i18n: application.lang }}</label>
+                        <input id="forgot-email" name="forgotEmail" type="email" ng-model="email" ng-required="true" ng-change="changeFormUsernameState()" required />
+                        <div class="border"></div>
+                        <div class="md-material-input-error md-white-theme c-red" ng-show="forgotForm.$submitted && forgotForm.email.$invalid && forgotForm.email.$untouched">{{ 'email_required' | i18n: application.lang }}</div>
+                        <div class="md-material-input-error md-white-theme c-red" ng-show="forgotForm.$submitted && forgotForm.email.$invalid && forgotForm.email.$touched && forgotForm.email.$isEmpty">{{ 'email_invalid' | i18n: application.lang }}</div>
+                    </md-input-container>
+                </div><br /><br /><br />
+
+                <div layout="row" layout-align="center center">
+                    <md-button aria-label="{{ 'send' | i18n: application.lang }}" type="submit" class="md-raised text-upercase">
+                        {{ 'send' | i18n: application.lang }}
+                    </md-button>
+                    <!--<div class="text-upercase btn btn-extra-large btn-register center-element cdb login-transitions">ok</div>-->
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>

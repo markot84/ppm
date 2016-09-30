@@ -1,0 +1,22 @@
+<form class="search" name="searchForm" ng-submit="mdSearchAction($event)" style="position: relative">
+    <div layout="row">
+        <md-button ng-click="mdSearchAction($event)" class="small small-icon">
+            <md-tooltip md-direction="bottom" md-autohide>Search</md-tooltip>
+            <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+        </md-button>
+        <md-input-container md-no-float class="md-default-theme md-material-input search-input" flex>
+            <input id="search-term" type="text" placeholder="search" ng-model="search.term" />
+            <div class="border"></div>
+        </md-input-container>
+    </div>
+    <div class="searchResults" ng-show="(search.results.length != 0)">
+        <md-list>
+            <md-list-item class="md-3-line" ng-repeat="result in search.results">
+                <a href="{{result.view}}">
+                    <span>{{result.label}}</span>
+                </a>
+            </md-list-item>
+        </md-list>
+    </div>
+</form>
+

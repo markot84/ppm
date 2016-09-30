@@ -1,0 +1,41 @@
+<md-bottom-sheet class="md-list md-has-header">
+    <md-subheader ng-cloak>Bottom Menu</md-subheader>
+    <md-list ng-cloak>
+
+        <md-list-item>
+            <md-button>
+                <md-icon class="material-icons">&#xE8B8;</md-icon>
+                Settings
+            </md-button>
+        </md-list-item>
+
+        <md-list-item>
+            <md-button disabled="disabled">
+                <md-icon class="material-icons">&#xE243;</md-icon>
+                Theme palete
+            </md-button>
+        </md-list-item>
+
+        <md-list-item>
+            <md-button disabled="{{ application.lang == 'en_US' ? 'disabled' : '' }}" ng-click="changeLang('en_US')" class="btn-with-image">
+                <img src="images/en.png" alt="en" />
+                {{ 'english' | i18n: application.lang }}
+            </md-button>
+        </md-list-item>
+
+        <md-list-item>
+            <md-button disabled="{{ application.lang == 'el_GR' ? 'disabled' : '' }}" ng-click="changeLang('el_GR')" class="btn-with-image">
+                <img src="images/gr.png" alt="gr" />
+                {{ 'greek' | i18n: application.lang }}
+            </md-button>
+        </md-list-item>
+
+        <md-list-item>
+            <md-button ng-click="logout()">
+                <md-icon class="material-icons">&#xE8AC;</md-icon>
+                {{ 'logout' | i18n: application.lang }}
+            </md-button>
+        </md-list-item>
+
+    </md-list>
+</md-bottom-sheet>

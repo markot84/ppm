@@ -1,0 +1,389 @@
+<!--https://stories.uplabs.com/getting-started-with-angular-material-3ee3cdb8ecd8#.3xxzph1rd-->
+<!--http://codepen.io/kyleledbetter/pen/gbQOaV-->
+
+<md-button class="md-fab md-fab-bottom-right md-raised md-default-theme md-dark-orange" type="submit" form="userForm" ng-if="model.tabs.selectedIndex">
+    <md-icon class="material-icons">{{ !model.isEdit ? '&#xE145;' : '&#xE254;' }}</md-icon>
+    <md-tooltip md-direction="left" md-autohide>{{ (model.isEdit ? 'update_user' : 'add_user') | i18n: application.lang }}</md-tooltip>
+</md-button>
+
+<md-toolbar class="md-menu-toolbar">
+    <div class="md-toolbar-tools">
+        <button ng-click="toggleSidenav('left')" hide-gt-sm class="menuBtn">
+            <span class="visually-hidden">Menu</span>
+        </button>
+        <h2 class="ralewaythin" flex>{{ 'users' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+
+        <div class="search" ng-if="!model.tabs.selectedIndex">
+            <md-button class="small small-icon" ng-click="toggleSearch($event)">
+                <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_search' | i18n: application.lang }}</md-tooltip>
+                <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+            </md-button>
+            <md-input-container md-no-float class="md-white-to-orange-theme md-material-input search-input" flex>
+                <input class="ralewaymedium" type="text" placeholder="{{ 'search_for_a_user' | i18n: application.lang }}" ng-model="$parent.userSearch.username" />
+                <div class="border"></div>
+            </md-input-container>
+        </div>
+
+        <md-button ng-click="showListBottomSheet($event)" class="small bg-black">
+            <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_menu' | i18n: application.lang }}</md-tooltip>
+            <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+        </md-button>
+    </div>
+</md-toolbar>
+
+<md-tabs flex md-stretch-tabs="always" md-selected="model.tabs.selectedIndex">
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="column" layout-padding>
+                <md-card>
+                    <md-toolbar class="md-table-toolbar md-default">
+                        <div class="md-toolbar-tools">
+                            <span>{{ 'filters' | i18n: application.lang }}:</span>
+                            <div flex="10" flex-offset="5" layout="row" ng-if="'clients' | canSee: user.role">
+                                <md-input-container class="md-black-to-orange-theme" flex>
+                                    <label>{{ 'client' | i18n: application.lang }}</label>
+                                    <md-select ng-model="$parent.userSearch.client_name" class="with-image-or-icon" flex>
+                                        <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                        <md-option ng-class="{ 'with-image': client.img_path }" ng-repeat="client in clients" value="{{ client.name }}">
+                                            <img src="{{ client.img_path }}" ng-if="client.img_path" />
+                                            <md-icon class="material-icons" ng-if="!client.img_path">&#xE0AF;</md-icon>
+                                            <span>{{ client.name }}</span>
+                                        </md-option>
+                                    </md-select>
+                                </md-input-container>
+                            </div>
+                            <div flex="10" layout="row" ng-class="{ 'flex-offset-5': !('clients' | canSee: user.role) }">
+                                <md-input-container class="md-black-to-orange-theme" flex>
+                                    <label>{{ 'role' | i18n: application.lang }}</label>
+                                    <md-select ng-model="userSearch.role_label">
+                                        <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                        <md-option value="Super User" ng-if="'clients' | canSee: user.role">{{ 'super_user' | i18n: application.lang }}</md-option>
+                                        <md-option value="Administrator">{{ 'administrator' | i18n: application.lang }}</md-option>
+                                        <md-option value="Editor">{{ 'editor' | i18n: application.lang }}</md-option>
+                                    </md-select>
+                                </md-input-container>
+                            </div>
+                            <div flex="10" layout="row">
+                                <md-input-container class="md-black-to-orange-theme" flex>
+                                    <label>{{ 'filter_status' | i18n: application.lang }}</label>
+                                    <md-select ng-model="userSearch.status">
+                                        <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                        <md-option value="1">{{ 'enabled' | i18n: application.lang }}</md-option>
+                                        <md-option value="0">{{ 'disabled' | i18n: application.lang }}</md-option>
+                                    </md-select>
+                                </md-input-container>
+                            </div>
+                        </div>
+                    </md-toolbar>
+                    <md-table-container>
+                        <table md-table md-progress="model.promise" data-progress-theme="md-orange-theme" md-row-select ng-model="model.selected" ng-init="getUsers()">
+                            <thead md-head md-on-reorder="init" md-order="model.query.order">
+                                <tr md-row>
+                                    <th md-column md-order-by="username"><span>{{ 'username' | i18n: application.lang }}</span></th>
+                                    <th md-column md-order-by="last_login"><span>{{ 'last_login' | i18n: application.lang }}</span></th>
+                                    <th md-column md-order-by="registered"><span>{{ 'registered' | i18n: application.lang }}</span></th>
+                                    <th md-column md-order-by="client_name" ng-if="'clients' | canSee: user.role"><span>{{ 'client' | i18n: application.lang }}</span></th>
+                                    <th md-column md-order-by="role_label"><span>{{ 'role' | i18n: application.lang }}</span></th>
+                                    <th md-column md-order-by="status"><span>{{ 'status' | i18n: application.lang }}</span></th>
+                                </tr>
+                            </thead>
+                            <tbody md-body>
+                                <tr md-row md-on-select="selectObject" md-on-deselect="deselectObject" md-select="user" ng-show="filteredUsers.length > 0" ng-repeat="user in filteredUsers = (model.users | filter:userSearch ) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit" >
+                                    <td md-cell class="center-align">{{ user.username }}</td>
+                                    <td md-cell class="center-align">{{ user.last_login | date:'dd/MM/yyyy :: HH:mm:ss' }}</td>
+                                    <td md-cell class="center-align">{{ user.registered | date:'dd/MM/yyyy :: HH:mm:ss' }}</td>
+                                    <td md-cell class="center-align" ng-if="'clients' | canSee: $parent.user.role">{{ user.client_name }}</td>
+                                    <td md-cell class="center-align">{{ user.role_label }}</td>
+                                    <td md-cell>
+                                        <md-switch md-no-ink aria-label="" ng-model="user.status" ng-true-value="1" ng-false-value="0" ng-change="changeStatus(user)">
+                                            {{ (user.status ? 'enabled' : 'disabled') | i18n: application.lang }}
+                                        </md-switch>
+                                    </td>
+                                </tr>
+                            <tr md-row ng-if="filteredUsers.length == 0">
+                                <td md-cell colspan="6" class="center-align"><p class="md-body-1">{{ 'no_users_found' | i18n: application.lang }}</p></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </md-table-container>
+                    <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredUsers.length}}"></md-table-pagination>
+                </md-card>
+            </div>
+        </md-tab-body>
+    </md-tab>
+
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="row" layout-padding>
+                <md-card flex="50" flex-offset="25">
+                    <md-card-header>
+                        <md-card-avatar>
+                            <md-icon class="material-icons">&#xE853;</md-icon>
+                        </md-card-avatar>
+                        <md-card-header-text ng-if="model.isEdit">
+                            <span class="md-title">{{ model.selectedObject.username }}</span>
+                            <span class="md-subhead" ng-class="model.selectedObject.status ? 'c-green' : 'c-red'">{{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</span>
+                        </md-card-header-text>
+                        <span class="card-switch-wrapper">
+                            <md-switch md-no-ink ng-model="model.selectedObject.status" ng-true-value="1" ng-false-value="0" flex="50"></md-switch>
+                            <md-tooltip md-direction="bottom" md-autohide>{{ 'status' | i18n: application.lang }}: {{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</md-tooltip>
+                        </span>
+                    </md-card-header>
+                    <md-card-content>
+                        <form layout="column" flex name="userForm" id="userForm" ng-submit="userForm.$valid && (model.isEdit ? updateUser() : addUser())" novalidate autocomplete="off">
+
+                            <div layout="row">
+                                <i class="material-icons md-28 center-align" flex="5">&#xE0BE;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                    <label for="username">{{ 'username' | i18n: application.lang }}</label>
+                                    <input id="username" name="username" ng-model="model.selectedObject.username" ng-required="true" type="email">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>{{ 'users_email_address' | i18n: application.lang }}</md-tooltip>
+                                        &#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="userForm.$submitted && userForm.username.$invalid && !userForm.username.$dirty">{{ 'username_required' | i18n: application.lang }}</div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="(userForm.$submitted || userForm.username.$touched) && userForm.username.$invalid && userForm.username.$viewValue">{{ 'email_invalid' | i18n: application.lang }}</div>
+                                </md-input-container>
+                            </div>
+
+                            <div layout="row" ng-hide="model.isEdit">
+                                <i class="material-icons md-28 center-align" flex="5">&#xE0BC;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                    <label for="password">{{ 'password' | i18n: application.lang }}</label>
+                                    <input id="password" name="password" ng-model="model.selectedObject.password" ng-required="!model.isEdit" ng-minlength="8" ng-maxlength="8" type="password">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>{{ 'users_password' | i18n: application.lang }}</md-tooltip>
+                                        &#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="userForm.$submitted && userForm.password.$invalid && !userForm.password.$dirty">{{ 'password_required' | i18n: application.lang }}</div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="(userForm.$submitted || userForm.password.$touched) && userForm.password.$invalid && userForm.password.$viewValue">{{ 'password_invalid' | i18n: application.lang }}</div>
+                                </md-input-container>
+                            </div>
+
+                            <div layout="column" flex-offset="10" ng-if="'clients' | canSee: user.role">
+                                <h4 class="ralewaythin">{{ 'users_client' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex="50" class="md-black-to-orange-theme">
+                                        <label>{{ 'select_client' | i18n: application.lang }}</label>
+                                        <md-select ng-model="model.selectedObject.client_id" class="with-image-or-icon">
+                                            <md-option ng-class="{ 'with-image': client.img_path }" ng-repeat="client in clients" value="{{client.id}}">
+                                                <img src="{{ client.img_path }}" ng-if="client.img_path" />
+                                                <md-icon class="material-icons" ng-if="!client.img_path">&#xE0AF;</md-icon>
+                                                {{client.name}}
+                                            </md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="row" flex-offset="10" layout-wrap>
+
+                                <h4 class="ralewaythin">{{ 'users_privilages' | i18n: application.lang }}</h4>
+
+                                <div layout="row" flex="50" ng-if="'users' | canSee: user.role">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.usersAccess" ng-true-value="128" ng-false-value="0" aria-label="Campaigns">
+                                        {{ 'users' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+
+                                <div layout="row">
+                                    <md-checkbox flex="50" ng-model="model.selectedObject.privileges.groupAccess" ng-true-value="1" ng-false-value="0" aria-label="Group">
+                                        {{ 'groups' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+
+                                <div layout="row" flex="50">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.applicationsAccess" ng-true-value="2" ng-false-value="0" aria-label="Users">
+                                        {{ 'applications' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+                                <div layout="row" flex="50">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.devicesAccess" ng-true-value="4" ng-false-value="0" aria-label="Devices">
+                                        {{ 'devices' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+                                <div layout="row" flex="50">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.messagesAccess" ng-true-value="8" ng-false-value="0" aria-label="Messages">
+                                        {{ 'messages' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+                                <div layout="row" flex="50">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.locationAccess" ng-true-value="16" ng-false-value="0" aria-label="Location">
+                                        {{ 'location' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+                                <div layout="row" flex="50">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.campaignsAccess" ng-true-value="32" ng-false-value="0" aria-label="Campaigns">
+                                        {{ 'campaigns' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+
+                                <div layout="row" flex="50" ng-if="'search_tags' | canSee: user.role">
+                                    <md-checkbox ng-model="model.selectedObject.privileges.searchTagsAccess" ng-true-value="64" ng-false-value="0" aria-label="Search Tags">
+                                        {{ 'search_tags' | i18n: application.lang }}
+                                    </md-checkbox>
+                                </div>
+
+                            </div>
+
+                        </form>
+                    </md-card-content>
+                </md-card>
+            </div>
+
+
+
+            <!--<div layout="column">-->
+                <!--<div layout="row">-->
+                    <!--<form layout="column" flex="50" name="userForm" ng-submit="userForm.$valid && (model.isEdit ? updateUser() : addUser())" novalidate autocomplete="off">-->
+                        <!--<div layout="row">-->
+                            <!--<i class="material-icons md-36 center-align" flex="10">&#xE0BE;</i>-->
+                            <!--<md-input-container class="md-black-to-orange-theme md-material-input required" flex="50">-->
+                                <!--<label for="username">{{ 'username' | i18n: application.lang }}</label>-->
+                                <!--<input id="username" name="username" ng-model="model.selectedObject.username" ng-required="true" type="email">-->
+                                <!--<md-icon class="material-icons">-->
+                                    <!--<md-tooltip md-direction="right" md-autohide>Email address</md-tooltip>-->
+                                    <!--&#xE0C6;-->
+                                <!--</md-icon>-->
+                                <!--<div class="border"></div>-->
+                                <!--<div class="md-material-input-error c-white" ng-show="userForm.$submitted && userForm.username.$invalid && !userForm.username.$dirty">{{ 'username_required' | i18n: application.lang }}</div>-->
+                                <!--<div class="md-material-input-error c-white" ng-show="(userForm.$submitted || userForm.username.$touched) && userForm.username.$invalid && userForm.username.$viewValue">{{ 'email_invalid' | i18n: application.lang }}</div>-->
+                            <!--</md-input-container>-->
+                        <!--</div>-->
+
+                        <!--<div layout="row" ng-hide="model.isEdit">-->
+                            <!--<i class="material-icons md-36 center-align" flex="10">&#xE0BC;</i>-->
+                            <!--<md-input-container class="md-black-to-orange-theme md-material-input required" flex="50">-->
+                                <!--<label for="password">{{ 'password' | i18n: application.lang }}</label>-->
+                                <!--<input id="password" name="password" ng-model="model.selectedObject.password" ng-required="!model.isEdit" ng-minlength="8" ng-maxlength="8" type="password">-->
+                                <!--<md-icon class="material-icons">-->
+                                    <!--<md-tooltip md-direction="right" md-autohide>User password, at least 8 digits</md-tooltip>-->
+                                    <!--&#xE0C6;-->
+                                <!--</md-icon>-->
+                                <!--<div class="border"></div>-->
+                                <!--<div class="md-material-input-error c-white" ng-show="userForm.$submitted && userForm.password.$invalid && !userForm.password.$dirty">{{ 'password_required' | i18n: application.lang }}</div>-->
+                                <!--<div class="md-material-input-error md-caption c-white" ng-show="(userForm.$submitted || userForm.password.$touched) && userForm.password.$invalid && userForm.password.$viewValue">{{ 'password_invalid' | i18n: application.lang }}</div>-->
+                            <!--</md-input-container>-->
+                        <!--</div>-->
+
+                        <!--<div layout="row" flex-offset="5">-->
+                            <!--<md-switch class="md-primary" md-no-ink aria-label="Switch User status" ng-model="model.selectedObject.status" ng-true-value="1" ng-false-value="0">-->
+                                <!--{{ 'status' | i18n: application.lang }}: {{ (userModel.selectedUser.status ? 'enabled' : 'disabled') | i18n: application.lang }}-->
+                            <!--</md-switch>-->
+                        <!--</div>-->
+
+                        <!--<div layout="column" ng-if="'clients' | canSee: user.role">-->
+                            <!--<h4 flex-offset="10" class="ralewaythin">{{ 'client' | i18n: application.lang }}</h4>-->
+                            <!--<div layout="row">-->
+                                <!--<md-input-container flex-offset="10" flex="50">-->
+                                    <!--<label>{{ 'client' | i18n: application.lang }}</label>-->
+                                    <!--<md-select ng-model="model.selectedObject.client_id">-->
+                                        <!--<md-option ng-repeat="client in clients" value="{{client.id}}">{{client.name}}</md-option>-->
+                                    <!--</md-select>-->
+                                <!--</md-input-container>-->
+                            <!--</div>-->
+                        <!--</div>-->
+
+                        <!--<h4 flex-offset="10" class="ralewaythin">Privileges</h4>-->
+
+                        <!--<div layout="row" flex-offset="10" ng-if="'users' | canSee: user.role">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.usersAccess" ng-true-value="128" ng-false-value="0" aria-label="Campaigns">-->
+                                <!--{{ 'users' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.groupAccess" ng-true-value="1" ng-false-value="0" aria-label="Group">-->
+                                <!--{{ 'group' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.applicationsAccess" ng-true-value="2" ng-false-value="0" aria-label="Users">-->
+                                <!--{{ 'applications' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.devicesAccess" ng-true-value="4" ng-false-value="0" aria-label="Devices">-->
+                                <!--{{ 'devices' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.messagesAccess" ng-true-value="8" ng-false-value="0" aria-label="Messages">-->
+                                <!--{{ 'messages' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.locationAccess" ng-true-value="16" ng-false-value="0" aria-label="Location">-->
+                                <!--{{ 'location' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" flex-offset="10">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.campaignsAccess" ng-true-value="32" ng-false-value="0" aria-label="Campaigns">-->
+                                <!--{{ 'campaigns' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+
+                        <!--<div layout="row" flex-offset="10" ng-if="'search_tags' | canSee: user.role">-->
+                            <!--<md-checkbox ng-model="model.selectedObject.privileges.searchTagsAccess" ng-true-value="64" ng-false-value="0" aria-label="Search Tags">-->
+                                <!--{{ 'search_tags' | i18n: application.lang }}-->
+                            <!--</md-checkbox>-->
+                        <!--</div>-->
+                        <!--<div layout="row" layout-align="end center">-->
+                            <!--<md-button ng-class="{'save-user-btn': !model.isEdit}" class="md-fab md-primary md-raised" type="submit">-->
+                                <!--<md-tooltip md-direction="left" md-autohide>{{ 'save' | i18n: application.lang }}</md-tooltip>-->
+                                <!--<md-icon class="material-icons">&#xE161;</md-icon>-->
+                            <!--</md-button>-->
+                        <!--</div>-->
+                    <!--</form>-->
+
+                    <!--<form flex="30" layout="column" ng-hide="!model.isEdit" name="changePasswordForm" ng-submit="changePassword()" novalidate autocomplete="off">-->
+                        <!--<h6 class="ralewaythin">Change users password</h6>-->
+                        <!--<div layout="row">-->
+                            <!--<md-input-container class="md-black-to-orange-theme md-material-input required" flex="80">-->
+                                <!--<md-icon class="material-icons">-->
+                                    <!--<md-tooltip md-direction="right" md-autohide>User password is encrypted, so if you want to change it just type a new password or leave it blank</md-tooltip>-->
+                                    <!--feedback-->
+                                <!--</md-icon>-->
+                                <!--<label for="password">{{ 'new_password' | i18n: application.lang }}</label>-->
+                                <!--<input id="newPassword" name="newPassword" ng-model="model.selectedObject.newPassword" ng-required="true" ng-minlength="8" ng-maxlength="8" type="password">-->
+                                <!--<div class="border"></div>-->
+                                <!--<div class="md-material-input-error c-white" ng-show="changePasswordForm.$submitted && changePasswordForm.password.$invalid && changePasswordForm.password.$untouched">-->
+                                    <!--{{ 'password_required' | i18n: application.lang }}-->
+                                <!--</div>-->
+                                <!--<div class="md-material-input-error md-caption c-white" ng-show="(changePasswordForm.$submitted || changePasswordForm.password.$touched) && changePasswordForm.password.$invalid && changePasswordForm.password.$viewValue">-->
+                                    <!--{{ 'password_invalid' | i18n: application.lang }}-->
+                                <!--</div>-->
+                            <!--</md-input-container>-->
+                        <!--</div>-->
+                        <!--<div layout="row">-->
+                            <!--<md-input-container class="md-black-to-orange-theme md-material-input required" flex="80">-->
+                                <!--<md-icon class="material-icons">-->
+                                    <!--<md-tooltip md-direction="right" md-autohide>User password is encrypted, so if you want to change it just type a new password or leave it blank</md-tooltip>-->
+                                    <!--feedback-->
+                                <!--</md-icon>-->
+                                <!--<label for="password">{{ 'retype_password' | i18n: application.lang }}</label>-->
+                                <!--<input id="retype-password" name="retypePassword" ng-model="model.selectedObject.retypePassword" ng-required="true" ng-minlength="8" ng-maxlength="8" type="password">-->
+                                <!--<div class="border"></div>-->
+                                <!--<div class="md-material-input-error c-white" ng-show="changePasswordForm.$submitted && changePasswordForm.retypePassword.$invalid && changePasswordForm.retypePassword.$untouched">-->
+                                    <!--{{ 'password_required' | i18n: application.lang }}-->
+                                <!--</div>-->
+                                <!--<div class="md-material-input-error md-caption c-white" ng-show="(changePasswordForm.$submitted || changePasswordForm.retypePassword.$touched) && changePasswordForm.retypePassword.$invalid && changePasswordForm.retypePassword.$viewValue">-->
+                                    <!--{{ 'password_invalid' | i18n: application.lang }}-->
+                                <!--</div>-->
+                            <!--</md-input-container>-->
+                        <!--</div>-->
+                        <!--<div layout="row" layout-align="end center">-->
+                            <!--<md-button class="md-fab md-primary md-raised" type="submit">-->
+                                <!--<md-tooltip md-direction="left" md-autohide>{{ 'update_user_password' | i18n: application.lang }}</md-tooltip>-->
+                                <!--<md-icon class="material-icons">&#xE161;</md-icon>-->
+                            <!--</md-button>-->
+                        <!--</div>-->
+                    <!--</form>-->
+                <!--</div>-->
+            <!--</div>-->
+        </md-tab-body>
+    </md-tab>
+</md-tabs>

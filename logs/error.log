@@ -1,0 +1,1 @@
+2016/09/30 13:00:44 [error] 1662#0: *372 open() "/etc/apache2/htdocs/testing-dev.gr404" failed (2: No such file or directory), client: 127.0.0.1, server: www.testing-dev.gr, request: "GET /images/lockpush_logo.png HTTP/1.1", host: "www.testing-dev.gr", referrer: "http://www.testing-dev.gr/"

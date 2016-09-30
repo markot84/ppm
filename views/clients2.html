@@ -1,0 +1,134 @@
+<md-dialog flex="50">
+    <md-dialog-content >
+        <md-button class="md-fab md-fab-bottom-right md-raised md-default-theme md-dark-orange" type="submit" form="clientForm" ng-if="model.tabs.selectedIndex">
+            <md-icon class="material-icons">{{ !model.isEdit ? '&#xE145;' : '&#xE254;' }}</md-icon>
+            <md-tooltip md-direction="left" md-autohide>{{ (model.isEdit ? 'update_client' : 'add_client') | i18n: application.lang }}</md-tooltip>
+        </md-button>
+
+        <md-toolbar class="md-menu-toolbar">
+            <div class="md-toolbar-tools">
+                <button ng-click="toggleSidenav('left')" hide-gt-sm class="menuBtn">
+                    <span class="visually-hidden">Menu</span>
+                </button>
+                <h2 class="ralewaythin" flex>{{ 'clients' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+
+                <div class="search" ng-if="!model.tabs.selectedIndex">
+                    <md-button class="small small-icon" ng-click="toggleSearch($event)">
+                        <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_search' | i18n: application.lang }}</md-tooltip>
+                        <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+                    </md-button>
+                    <md-input-container md-no-float class="md-white-to-orange-theme md-material-input search-input" flex>
+                        <input class="ralewaymedium" type="text" placeholder="{{ 'search_for_a_client' | i18n: application.lang }}" ng-model="$parent.clientSearch.name" />
+                        <div class="border"></div>
+                    </md-input-container>
+                </div>
+
+                <md-button ng-click="showListBottomSheet($event)" class="small bg-black">
+                    <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_menu' | i18n: application.lang }}</md-tooltip>
+                    <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+
+        <md-tabs md-dynamic-height md-stretch-tabs="always" flex md-selected="model.tabs.selectedIndex">
+            <md-tab layout="column" md-on-select="tabChange()">
+                <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+                <md-tab-body>
+                    <div layout="column" layout-padding>
+                        <md-card>
+                            <md-toolbar class="md-table-toolbar md-default">
+                                <div class="md-toolbar-tools">
+                                    <span>{{ 'filters' | i18n: application.lang }}:</span>
+                                    <div flex="10" flex-offset="5" layout="row">
+                                        <md-select ng-model="clientSearch.status" placeholder="{{ 'status' | i18n: application.lang }}" flex>
+                                            <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                            <md-option value="1">{{ 'enabled' | i18n: application.lang }}</md-option>
+                                            <md-option value="0">{{ 'disabled' | i18n: application.lang }}</md-option>
+                                        </md-select>
+                                    </div>
+                                </div>
+                            </md-toolbar>
+                            <md-table-container>
+                                <table md-table md-progress="model.promise" data-progress-theme="md-orange-theme" md-row-select ng-model="model.selected" ng-init="getClients()">
+                                    <thead md-head md-on-reorder="init" md-order="model.query.order">
+                                    <tr md-row>
+                                        <th md-column md-order-by="name"><span>{{ 'name' | i18n: application.lang }}</span></th>
+                                        <th md-column md-order-by="status"><span>{{ 'status' | i18n: application.lang }}</span></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody md-body>
+                                    <tr md-row md-on-select="selectObject" md-on-deselect="deselectObject" md-select="client" ng-show="filteredClients.length > 0" ng-repeat="client in filteredClients = (clients | filter:clientSearch) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit" >
+                                        <td md-cell class="center-align">{{ client.name }}</td>
+                                        <td md-cell>
+                                            <md-switch md-no-ink aria-label="Switch Client status" ng-model="client.status" ng-true-value="1" ng-false-value="0"  ng-change="changeStatus(client)" ng-disabled="client.name=='ARX.NET'">
+                                                {{ (client.status ? 'enabled' : 'disabled') | i18n: application.lang }}
+                                            </md-switch>
+                                        </td>
+                                    </tr>
+                                    <tr md-row ng-if="filteredClients.length == 0">
+                                        <td md-cell colspan="2" class="center-align"><p class="md-body-1">{{ 'no_clients_found' | i18n: application.lang }}</p></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </md-table-container>
+                            <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredClients.length}}"></md-table-pagination>
+                        </md-card>
+                    </div>
+
+                </md-tab-body>
+            </md-tab>
+
+            <md-tab layout="column" md-on-select="tabChange()">
+
+                <md-tab-label flex="10">{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+                <md-tab-body>
+                    <div layout="row" layout-padding>
+                        <md-card flex="50" flex-offset="25">
+                            <md-card-header>
+                                <md-card-avatar>
+                                    <md-icon class="material-icons">&#xE0AF;</md-icon>
+                                </md-card-avatar>
+                                <md-card-header-text ng-if="model.isEdit">
+                                    <span class="md-title">{{ model.selectedObject.name }}</span>
+                                    <span class="md-subhead" ng-class="model.selectedObject.status ? 'c-green' : 'c-red'">{{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</span>
+                                </md-card-header-text>
+                                <span class="card-switch-wrapper">
+                                    <md-switch aria-label="Switch Client status" md-no-ink ng-model="model.selectedObject.status" ng-true-value="1" ng-false-value="0" flex="50" ng-change="changeStatus(false)" ng-disabled="!model.isEdit || model.selectedObject.name=='ARX.NET'"></md-switch>
+                                    <md-tooltip md-direction="bottom" md-autohide>{{ 'status' | i18n: application.lang }}: {{ (model.selectedObject.status ? 'enabled' : 'disabled') | i18n: application.lang }}</md-tooltip>
+                                </span>
+                            </md-card-header>
+                            <div class="md-card-image center-align" flex ng-if="model.selectedObject.img_path"><img ng-src="{{model.selectedObject.img_path}}" alt="{{model.selectedObject.name}}" /></div>
+                            <md-card-content>
+                                <form name="clientForm" id="clientForm" flex ng-submit="clientForm.$valid && (model.isEdit ? updateClient() : addClient())" novalidate autocomplete="off">
+
+                                    <div layout="row">
+                                        <i class="material-icons md-28 center-align" flex="5">&#xE886;</i>
+                                        <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                            <label for="client-name">{{ 'name' | i18n: application.lang }}</label>
+                                            <input id="client-name" name="client_name" ng-model="model.selectedObject.name" ng-required="true" type="text" ng-keyup="checkNameExists()">
+                                            <md-icon class="material-icons">
+                                                <md-tooltip md-direction="right" md-autohide>{{ 'client_name' | i18n: application.lang }}</md-tooltip>
+                                                &#xE0C6;
+                                            </md-icon>
+                                            <div class="border"></div>
+                                            <div class="md-material-input-error md-default-theme c-white" ng-show="(clientForm.$submitted && clientForm.$invalid) || model.nameExist">
+                                                {{ (model.nameExist) ? ('client_name_exists' | i18n: application.lang) : ('client_name_required' | i18n: application.lang) }}
+                                            </div>
+                                        </md-input-container>
+                                    </div>
+
+                                    <h4 class="ralewaythin">{{ 'upload_clients_logo' | i18n: application.lang }}</h4>
+
+                                    <div layout="row">
+                                        <md-dropzone flex="60" flex-offset="15" data-drop-options=""></md-dropzone>
+                                    </div>
+
+                                </form>
+                            </md-card-content>
+                        </md-card>
+                    </div>
+                </md-tab-body>
+            </md-tab>
+        </md-tabs>
+    </md-dialog-content>
+</md-dialog>

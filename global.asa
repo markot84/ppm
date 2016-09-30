@@ -1,0 +1,24 @@
+use strict;
+use JSON();
+use App::Locpush::User();
+use App::Locpush::Client();
+use App::Locpush::Devices();
+use App::Locpush::Application();
+use App::Locpush::Campaign();
+use App::Locpush::Group();
+use App::Locpush::File();
+
+sub Script_OnStart {
+    $Session->{lang} = 'en_US' unless $Session->{lang};
+}
+
+sub amilogin {
+    return $Session->{user_id} || 0;
+}
+
+sub logout {
+    delete $Session->{user_id};
+    delete $Session->{user_name};
+    delete $Session->{user_role};
+    delete $Session->{user_client_id};
+}

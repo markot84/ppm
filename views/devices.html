@@ -1,0 +1,163 @@
+<md-button class="md-fab md-fab-bottom-right md-raised md-default-theme md-dark-orange" type="submit" form="deviceForm" ng-if="model.tabs.selectedIndex">
+    <md-icon class="material-icons">&#xE161;</md-icon>
+    <md-tooltip md-direction="left" md-autohide>{{ 'update_application' | i18n: application.lang }}</md-tooltip>
+</md-button>
+
+<md-toolbar class="md-menu-toolbar">
+    <div class="md-toolbar-tools">
+        <button ng-click="toggleSidenav('left')" hide-gt-sm class="menuBtn">
+            <span class="visually-hidden">Menu</span>
+        </button>
+        <h2 class="ralewaythin" flex>{{ 'devices' | i18n: application.lang }} | {{ model.tabs.title }}</h2>
+
+        <div class="search" ng-if="!model.tabs.selectedIndex">
+            <md-button class="small small-icon" ng-click="toggleSearch($event)">
+                <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_search' | i18n: application.lang }}</md-tooltip>
+                <md-icon class="material-icons c-white">&#xE8B6;</md-icon>
+            </md-button>
+            <md-input-container md-no-float class="md-white-to-orange-theme md-material-input search-input" flex>
+                <input class="ralewaymedium" type="text" placeholder="{{ 'search_for_a_device' | i18n: application.lang }}" ng-model="$parent.deviceSearch.name" />
+                <div class="border"></div>
+            </md-input-container>
+        </div>
+
+        <md-button ng-click="showListBottomSheet($event)" class="small bg-black">
+            <md-tooltip md-direction="bottom" md-autohide>{{ 'toggle_menu' | i18n: application.lang }}</md-tooltip>
+            <md-icon class="material-icons c-white">&#xE5D4;</md-icon>
+        </md-button>
+    </div>
+</md-toolbar>
+<md-tabs flex md-stretch-tabs="always" md-selected="model.tabs.selectedIndex">
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ 'list' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="column" layout-padding>
+                <md-content layout-gt-sm="row" layout-wrap>
+                    <h4 flex="100" class="ralewaythin">{{ 'filters' | i18n: application.lang }}</h4>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" flex>
+                            <label>{{ 'device' | i18n: application.lang }}</label>
+                            <input id="device-search" ng-model="deviceSearch.uuid" ng-change="afterSearch()" />
+                        </md-input-container>
+                    </div>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" flex>
+                            <label>{{ 'application' | i18n: application.lang }}</label>
+                            <md-select ng-model="deviceSearch.application_id">
+                                <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                <md-option ng-repeat="application in model.applications" value="{{application.id}}">{{application.name}}</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" ng-if="'clients' | canSee: user.role" flex>
+                            <label>{{ 'client' | i18n: application.lang }}</label>
+                            <md-select ng-model="deviceSearch.client_id">
+                                <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                <md-option ng-repeat="client in clients" value="{{client.id}}">{{client.name}}</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                    <div flex="10" layout="row">
+                        <md-input-container class="md-black-to-orange-theme" flex>
+                            <label>{{ 'owner_type' | i18n: application.lang }}</label>
+                            <md-select ng-model="deviceSearch.is_client">
+                                <md-option value="!!">{{ 'all' | i18n: application.lang }}</md-option>
+                                <md-option value="1">{{ 'client' | i18n: application.lang }}</md-option>
+                                <md-option value="0">{{ 'developer' | i18n: application.lang }}</md-option>
+                            </md-select>
+                        </md-input-container>
+                    </div>
+                </md-content>
+
+                <md-table-container>
+                    <table md-table md-progress="model.promise" data-progress-theme="md-orange-theme" md-row-select ng-model="model.selected" ng-init="getDevices()">
+                        <thead md-head md-on-reorder="init" md-order="model.query.order">
+                        <tr md-row>
+                            <th md-column md-order-by="uuid"><span>{{ 'uuid' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="application"><span>{{ 'application' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="client_name"><span>{{ 'client_name' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="is_client"><span>{{ 'owner_type' | i18n: application.lang }}</span></th>
+                            <th md-column md-order-by="registered"><span>{{ 'registered' | i18n: application.lang }}</span></th>
+                        </tr>
+                        </thead>
+                        <tbody md-body>
+                        <tr md-row md-on-select="selectDevice" md-on-deselect="deselectObject" md-select="device" md-auto-select ng-show="filteredDevices.length > 0" ng-repeat="device in filteredDevices = (model.devices | filter:deviceSearch ) | orderBy: model.query.order | limitTo: model.query.limit: (model.query.page - 1) * model.query.limit" >
+                            <td md-cell class="center-align">{{ device.uuid }}</td>
+                            <td md-cell class="center-align">{{ device.application_name }}</td>
+                            <td md-cell class="center-align">{{ device.client_name }}</td>
+                            <td md-cell class="center-align">{{ device.is_client ? 'client' : 'developer' | i18n: application.lang }}</td>
+                            <td md-cell class="center-align">{{ device.registered | date:'dd/MM/yyyy :: HH:mm:ss' }}</td>
+                        </tr>
+                        <tr md-row ng-if="filteredDevices.length==0">
+                            <td md-cell colspan="5" class="center-align"><p class="md-body-1">{{ 'no_devices_found' | i18n: application.lang }}</p></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </md-table-container>
+
+                <md-table-pagination md-limit="model.query.limit" md-limit-options="model.limitOptions" md-page="model.query.page" md-total="{{filteredDevices.length}}"></md-table-pagination>
+            </div>
+        </md-tab-body>
+    </md-tab>
+
+    <md-tab layout="column" md-on-select="tabChange()">
+        <md-tab-label>{{ model.isEdit ? 'edit' : 'add' | i18n: application.lang }}</md-tab-label>
+        <md-tab-body>
+            <div layout="row" layout-padding>
+                <md-card flex="50" flex-offset="25">
+                    <md-card-header>
+                        <md-card-avatar>
+                            <md-icon class="material-icons">&#xE1B1;</md-icon>
+                        </md-card-avatar>
+                        <md-card-header-text ng-if="model.isEdit">
+                            <span class="md-title">{{ model.selectedObject.uuid }}</span>
+                        </md-card-header-text>
+                    </md-card-header>
+                    <md-card-content>
+                        <form layout="column" flex name="deviceForm" id="deviceForm" ng-submit="deviceForm.$valid && (model.isEdit ? updateDevice() : addDevice())" novalidate autocomplete="off">
+
+                            <div layout="row">
+                                <i class="material-icons md-28 center-align" flex="5">&#xE0BE;</i>
+                                <md-input-container class="md-black-to-orange-theme md-material-input required" flex>
+                                    <label for="uuid">{{ 'uuid' | i18n: application.lang }}</label>
+                                    <input id="uuid" name="uuid" ng-model="model.selectedObject.uuid" ng-required="true" ng-disabled="model.selectedObject.is_client">
+                                    <md-icon class="material-icons">
+                                        <md-tooltip md-direction="right" md-autohide>{{ model.selectedObject.is_client ? 'cant_change_clients_uuid' : 'device_uuid' | i18n: application.lang }}</md-tooltip>
+                                     &#xE0C6;
+                                    </md-icon>
+                                    <div class="border"></div>
+                                    <div class="md-material-input-error md-default-theme c-white" ng-show="deviceForm.$submitted && deviceForm.uuid.$invalid && !deviceForm.uuid.$dirty">{{ 'uuid_required' | i18n: application.lang }}</div>
+                                </md-input-container>
+                            </div>
+
+                            <div layout="column" ng-if="'clients' | canSee: user.role">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'devices_client' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex-offset="10" flex="50" class="md-black-to-orange-theme">
+                                        <label>{{ 'client' | i18n: application.lang }}</label>
+                                        <md-select ng-model="model.selectedObject.client_id" ng-required="true">
+                                            <md-option ng-repeat="client in clients" value="{{client.id}}">{{client.name}}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+                            </div>
+
+                            <div layout="column">
+                                <h4 flex-offset="10" class="ralewaythin">{{ 'application' | i18n: application.lang }}</h4>
+                                <div layout="row">
+                                    <md-input-container flex-offset="10" flex="50" class="md-black-to-orange-theme">
+                                        <label>{{ 'application' | i18n: application.lang }}</label>
+                                        <md-select ng-model="model.selectedObject.application_id" ng-disabled="!model.selectedObject.client_id">
+                                            <md-option ng-repeat="application in model.applications" value="{{application.id}}" ng-if="model.selectedObject.client_id==application.client_id">{{application.name}}</md-option>
+                                        </md-select>
+                                    </md-input-container>
+                                </div>
+                            </div>
+                        </form>
+                    </md-card-content>
+                </md-card>
+            </div>
+        </md-tab-body>
+    </md-tab>
+</md-tabs>
